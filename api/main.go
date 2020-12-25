@@ -17,65 +17,14 @@
 package main
 
 import (
-	"context"
 	"fmt"
-	"net/http"
 	"os"
-	"os/signal"
-	"syscall"
-	"time"
 
-	"github.com/apisix/manager-api/conf"
-	"github.com/apisix/manager-api/internal"
-	"github.com/apisix/manager-api/internal/core/storage"
-	"github.com/apisix/manager-api/internal/core/store"
-	"github.com/apisix/manager-api/internal/utils"
-	"github.com/apisix/manager-api/log"
+	"github.com/apisix/manager-api/cmd"
 )
 
 func main() {
-
-	if err := storage.InitETCDClient(conf.ETCDEndpoints); err != nil {
-		log.Error("init etcd client fail: %w", err)
-		panic(err)
+	if err := cmd.NewManagerAPICommand().Execute(); err != nil {
+		fmt.Fprintln(os.Stderr, err.Error())
 	}
-	if err := store.InitStores(); err != nil {
-		log.Error("init stores fail: %w", err)
-		panic(err)
-	}
-	// routes
-	r := internal.SetUpRouter()
-	addr := fmt.Sprintf("%s:%d", conf.ServerHost, conf.ServerPort)
-	s := &http.Server{
-		Addr:         addr,
-		Handler:      r,
-		ReadTimeout:  time.Duration(1000) * time.Millisecond,
-		WriteTimeout: time.Duration(5000) * time.Millisecond,
-	}
-
-	log.Infof("The Manager API is listening on %s ", addr)
-
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-
-	go func() {
-		if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			utils.CloseAll()
-			log.Fatalf("listen and serv fail: %w", err)
-		}
-	}()
-
-	sig := <-quit
-	log.Infof("The Manager API server receive %s and start shutting down", sig.String())
-
-	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
-	defer cancel()
-
-	if err := s.Shutdown(ctx); err != nil {
-		log.Errorf("Shutting down server error: %w", err)
-	}
-
-	log.Infof("The Manager API server exited")
-
-	utils.CloseAll()
 }

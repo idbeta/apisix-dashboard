@@ -29,26 +29,37 @@ export default {
   'page.route.rule': '规则',
   'page.route.domainName': '域名',
   'page.route.path': '路径',
+  'page.route.remoteAddrs': '客户端地址',
   'page.route.value': '参数值',
   'page.route.protocol': '协议',
   'page.route.httpHeaderName': 'HTTP 请求头名称',
   'page.route.status': '状态',
   'page.route.groupName': '分组名称',
   'page.route.offline': '下线',
+  'page.route.publish': '发布',
+  'page.route.published': '已发布',
+  'page.route.unpublished': '未发布',
+  'page.route.onlineDebug': '在线调试',
+  'page.route.service': '服务',
 
   // button
   'page.route.button.returnList': '返回路由列表',
+  'page.route.button.send': '发送请求',
 
   // input
   'page.route.input.placeholder.parameterNameHttpHeader': '请求头键名，例如：HOST',
   'page.route.input.placeholder.parameterNameRequestParameter': '参数名称，例如：id',
   'page.route.input.placeholder.redirectCustom': '例如：/foo/index.html',
+  'page.route.input.placeholder.requestUrl': '请输入请求地址',
+  'page.route.input.placeholder.paramKey': '参数名称',
+  'page.route.input.placeholder.paramValue': '参数值',
   // form
   'page.route.form.itemRulesRequiredMessage.parameterName': '仅支持字母和数字，且只能以字母开头',
   'page.route.form.itemLabel.apiName': 'API 名称',
   'page.route.form.itemRulesPatternMessage.apiNameRule':
     '最大长度100，仅支持字母、数字、- 和 _，且只能以字母开头',
   'page.route.form.itemLabel.httpMethod': 'HTTP 方法',
+  'page.route.form.itemLabel.priority': '优先级',
   'page.route.form.itemLabel.redirect': '重定向',
   'page.route.form.itemLabel.redirectCustom': '自定义重定向',
   'page.route.form.itemLabel.rewriteType': '请求路径',
@@ -60,6 +71,14 @@ export default {
     '1. 请求路径，如 /foo/index.html，支持请求路径前缀 /foo/* ；',
   'page.route.form.itemExtraMessage2.path': '2. /* 代表所有路径',
   'page.route.form.itemRulesPatternMessage.path': '以 / 开头，且 * 只能在最后',
+  'page.route.form.itemExtraMessage1.remoteAddrs':
+    '客户端 IP，例如：192.168.1.101，192.168.1.0/24，::1，fe80::1，fe80::1/64',
+  'page.route.form.itemRulesPatternMessage.remoteAddrs':
+    '请输入合法的 IP 地址，例如：192.168.1.101，192.168.1.0/24，::1，fe80::1，fe80::1/64',
+  'page.route.form.itemLabel.username': '用户名',
+  'page.route.form.itemLabel.password': '密 码',
+  'page.route.form.itemLabel.token': 'Token',
+  'page.route.form.itemLabel.apikey': 'Apikey',
 
   // select
   'page.route.select.option.enableHttps': '启用 HTTPS',
@@ -79,6 +98,8 @@ export default {
   'page.route.panelSection.title.requestOverride': '请求改写',
   'page.route.panelSection.title.requestConfigBasicDefine': '请求基础定义',
   'page.route.panelSection.title.advancedMatchRule': '高级路由匹配条件',
+  'page.route.PanelSection.title.defineRequestParams': '请求参数定义',
+  'page.route.PanelSection.title.responseResult': '请求响应结果',
 
   'page.route.httpAction': '行为',
   'page.route.httpOverrideOrCreate': '重写/创建',
@@ -97,4 +118,11 @@ export default {
   'page.route.input.placeholder.newPath': '例如：/foo/bar/index.html',
   'page.route.form.itemLabel.newPath': '新地址',
   'page.route.popconfirm.title.offline': '确定下线该路由吗？',
+  'page.route.debug.showResultAfterSendRequest': '发送请求后在此查看响应结果',
+  'page.route.TabPane.queryParams': '查询参数',
+  'page.route.TabPane.bodyParams': '请求体参数',
+  'page.route.TabPane.headerParams': '请求头参数',
+  'page.route.TabPane.authentication': '认证',
+  'page.route.TabPane.response': '响应结果',
+  'page.route.debugWithoutAuth': '当前请求不启用任何认证方式。',
 };

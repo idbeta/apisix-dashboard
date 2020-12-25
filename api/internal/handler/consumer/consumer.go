@@ -31,6 +31,7 @@ import (
 	"github.com/apisix/manager-api/internal/core/entity"
 	"github.com/apisix/manager-api/internal/core/store"
 	"github.com/apisix/manager-api/internal/handler"
+	"github.com/apisix/manager-api/internal/utils"
 )
 
 type Handler struct {
@@ -48,14 +49,12 @@ func (h *Handler) ApplyRoute(r *gin.Engine) {
 		wrapper.InputType(reflect.TypeOf(GetInput{}))))
 	r.GET("/apisix/admin/consumers", wgin.Wraps(h.List,
 		wrapper.InputType(reflect.TypeOf(ListInput{}))))
-	r.POST("/apisix/admin/consumers", wgin.Wraps(h.Create,
-		wrapper.InputType(reflect.TypeOf(entity.Consumer{}))))
-	r.PUT("/apisix/admin/consumers/:username", wgin.Wraps(h.Update,
-		wrapper.InputType(reflect.TypeOf(UpdateInput{}))))
-	r.PUT("/apisix/admin/consumers", wgin.Wraps(h.Update,
-		wrapper.InputType(reflect.TypeOf(UpdateInput{}))))
+	r.PUT("/apisix/admin/consumers/:username", wgin.Wraps(h.Set,
+		wrapper.InputType(reflect.TypeOf(SetInput{}))))
+	r.PUT("/apisix/admin/consumers", wgin.Wraps(h.Set,
+		wrapper.InputType(reflect.TypeOf(SetInput{}))))
 	r.DELETE("/apisix/admin/consumers/:usernames", wgin.Wraps(h.BatchDelete,
-		wrapper.InputType(reflect.TypeOf(BatchDelete{}))))
+		wrapper.InputType(reflect.TypeOf(BatchDeleteInput{}))))
 }
 
 type GetInput struct {
@@ -77,6 +76,40 @@ type ListInput struct {
 	store.Pagination
 }
 
+// swagger:operation GET /apisix/admin/consumers getConsumerList
+//
+// Return the consumer list according to the specified page number and page size, and can search consumers by username.
+//
+// ---
+// produces:
+// - application/json
+// parameters:
+// - name: page
+//   in: query
+//   description: page number
+//   required: false
+//   type: integer
+// - name: page_size
+//   in: query
+//   description: page size
+//   required: false
+//   type: integer
+// - name: username
+//   in: query
+//   description: username of consumer
+//   required: false
+//   type: string
+// responses:
+//   '0':
+//     description: list response
+//     schema:
+//       type: array
+//       items:
+//         "$ref": "#/definitions/consumer"
+//   default:
+//     description: unexpected error
+//     schema:
+//       "$ref": "#/definitions/ApiError"
 func (h *Handler) List(c droplet.Context) (interface{}, error) {
 	input := c.Input().(*ListInput)
 
@@ -97,36 +130,14 @@ func (h *Handler) List(c droplet.Context) (interface{}, error) {
 	return ret, nil
 }
 
-func (h *Handler) Create(c droplet.Context) (interface{}, error) {
-	input := c.Input().(*entity.Consumer)
-	if input.ID != "" && input.ID != input.Username {
-		return &data.SpecCodeResponse{StatusCode: http.StatusBadRequest},
-			fmt.Errorf("consumer's id and username must be a same value")
-	}
-	input.ID = input.Username
-
-	if _, ok := input.Plugins["jwt-auth"]; ok {
-		jwt := input.Plugins["jwt-auth"].(map[string]interface{})
-		jwt["exp"] = 86400
-
-		input.Plugins["jwt-auth"] = jwt
-	}
-
-	if err := h.consumerStore.Create(c.Context(), input); err != nil {
-		return handler.SpecCodeResponse(err), err
-	}
-
-	return nil, nil
-}
-
-type UpdateInput struct {
-	Username string `auto_read:"username,path"`
+type SetInput struct {
 	entity.Consumer
+	Username string `auto_read:"username,path"`
 }
 
-func (h *Handler) Update(c droplet.Context) (interface{}, error) {
-	input := c.Input().(*UpdateInput)
-	if input.ID != "" && input.ID != input.Username {
+func (h *Handler) Set(c droplet.Context) (interface{}, error) {
+	input := c.Input().(*SetInput)
+	if input.ID != nil && utils.InterfaceToString(input.ID) != input.Username {
 		return &data.SpecCodeResponse{StatusCode: http.StatusBadRequest},
 			fmt.Errorf("consumer's id and username must be a same value")
 	}
@@ -134,34 +145,30 @@ func (h *Handler) Update(c droplet.Context) (interface{}, error) {
 		input.Consumer.Username = input.Username
 	}
 	input.Consumer.ID = input.Consumer.Username
-
-	if _, ok := input.Consumer.Plugins["jwt-auth"]; ok {
-		jwt := input.Consumer.Plugins["jwt-auth"].(map[string]interface{})
-		jwt["exp"] = 86400
-
-		input.Consumer.Plugins["jwt-auth"] = jwt
-	}
+	ensurePluginsDefValue(input.Plugins)
 
 	if err := h.consumerStore.Update(c.Context(), &input.Consumer, true); err != nil {
-		//if not exists, create
-		if err.Error() == fmt.Sprintf("key: %s is not found", input.Username) {
-			if err := h.consumerStore.Create(c.Context(), &input.Consumer); err != nil {
-				return handler.SpecCodeResponse(err), err
-			}
-		} else {
-			return handler.SpecCodeResponse(err), err
-		}
+		return handler.SpecCodeResponse(err), err
 	}
 
 	return nil, nil
 }
 
-type BatchDelete struct {
+func ensurePluginsDefValue(plugins map[string]interface{}) {
+	if plugins["jwt-auth"] != nil {
+		jwtAuth, ok := plugins["jwt-auth"].(map[string]interface{})
+		if ok && jwtAuth["exp"] == nil {
+			jwtAuth["exp"] = 86400
+		}
+	}
+}
+
+type BatchDeleteInput struct {
 	UserNames string `auto_read:"usernames,path"`
 }
 
 func (h *Handler) BatchDelete(c droplet.Context) (interface{}, error) {
-	input := c.Input().(*BatchDelete)
+	input := c.Input().(*BatchDeleteInput)
 
 	if err := h.consumerStore.BatchDelete(c.Context(), strings.Split(input.UserNames, ",")); err != nil {
 		return handler.SpecCodeResponse(err), err

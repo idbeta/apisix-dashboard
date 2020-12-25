@@ -66,8 +66,8 @@ func TestSSL_Basic(t *testing.T) {
 	// main test cases
 	tests := []HttpTestCase{
 		{
-			caseDesc:     "create ssl fail - key and cert not match",
-			Object:       MangerApiExpect(t),
+			Desc:         "create ssl fail - key and cert not match",
+			Object:       ManagerApiExpect(t),
 			Method:       http.MethodPost,
 			Path:         "/apisix/admin/ssl",
 			Body:         string(invalidBody),
@@ -75,8 +75,8 @@ func TestSSL_Basic(t *testing.T) {
 			ExpectStatus: http.StatusBadRequest,
 		},
 		{
-			caseDesc:     "create ssl successfully",
-			Object:       MangerApiExpect(t),
+			Desc:         "create ssl successfully",
+			Object:       ManagerApiExpect(t),
 			Method:       http.MethodPost,
 			Path:         "/apisix/admin/ssl",
 			Body:         string(body),
@@ -84,10 +84,10 @@ func TestSSL_Basic(t *testing.T) {
 			ExpectStatus: http.StatusOK,
 		},
 		{
-			caseDesc: "create route",
-			Object:   MangerApiExpect(t),
-			Method:   http.MethodPut,
-			Path:     "/apisix/admin/routes/r1",
+			Desc:   "create route",
+			Object: ManagerApiExpect(t),
+			Method: http.MethodPut,
+			Path:   "/apisix/admin/routes/r1",
 			Body: `{
 				"uri": "/hello_",
 				"hosts": ["test2.com", "*.test2.com"],
@@ -102,7 +102,15 @@ func TestSSL_Basic(t *testing.T) {
 			ExpectStatus: http.StatusOK,
 		},
 		{
-			caseDesc:     "hit the route just created using HTTPS",
+			Desc:         "get the route just created to trigger removing `key`",
+			Object:       ManagerApiExpect(t),
+			Method:       http.MethodGet,
+			Path:         "/apisix/admin/routes/r1",
+			Headers:      map[string]string{"Authorization": token},
+			ExpectStatus: http.StatusOK,
+		},
+		{
+			Desc:         "hit the route just created using HTTPS",
 			Object:       APISIXHTTPSExpect(t),
 			Method:       http.MethodGet,
 			Path:         "/hello_",
@@ -112,18 +120,65 @@ func TestSSL_Basic(t *testing.T) {
 			Sleep:        sleepTime,
 		},
 		{
-			caseDesc:     "delete ssl",
-			Object:       MangerApiExpect(t),
-			Method:       http.MethodDelete,
-			Path:         "/apisix/admin/ssl/1",
+			Desc:   "disable SSL",
+			Object: ManagerApiExpect(t),
+			Method: http.MethodPatch,
+			Path:   "/apisix/admin/ssl/1",
+			Body: `{
+				"status": 0
+			}`,
 			Headers:      map[string]string{"Authorization": token},
 			ExpectStatus: http.StatusOK,
 		},
 	}
 
 	for _, tc := range tests {
-		testCaseCheck(tc)
+		testCaseCheck(tc, t)
 	}
+
+	// try again after disable SSL, make a HTTPS request
+	// If use the test framework, errors will cause failure, so we need to make a separate https request for testing.
+	time.Sleep(sleepTime)
+	_, err = http.Get("https://www.test2.com:9443")
+	assert.NotNil(t, err)
+	assert.EqualError(t, err, "Get https://www.test2.com:9443: remote error: tls: internal error")
+
+	// enable SSL again
+	tests = []HttpTestCase{
+		{
+			Desc:         "enable SSL",
+			Object:       ManagerApiExpect(t),
+			Method:       http.MethodPatch,
+			Path:         "/apisix/admin/ssl/1/status",
+			Body:         `1`,
+			Headers:      map[string]string{"Authorization": token},
+			ExpectStatus: http.StatusOK,
+		},
+		{
+			Desc:         "hit the route using HTTPS, make sure enable successful",
+			Object:       APISIXHTTPSExpect(t),
+			Method:       http.MethodGet,
+			Path:         "/hello_",
+			Headers:      map[string]string{"Host": "www.test2.com"},
+			ExpectStatus: http.StatusOK,
+			ExpectBody:   "hello world\n",
+			Sleep:        sleepTime,
+		},
+	}
+	for _, tc := range tests {
+		testCaseCheck(tc, t)
+	}
+
+	// delete SSL
+	delSSL := HttpTestCase{
+		Desc:         "delete SSL",
+		Object:       ManagerApiExpect(t),
+		Method:       http.MethodDelete,
+		Path:         "/apisix/admin/ssl/1",
+		Headers:      map[string]string{"Authorization": token},
+		ExpectStatus: http.StatusOK,
+	}
+	testCaseCheck(delSSL, t)
 
 	// try again after deleting SSL, make a HTTPS request
 	// If use the test framework, errors will cause failure, so we need to make a separate https request for testing.
@@ -134,13 +189,12 @@ func TestSSL_Basic(t *testing.T) {
 
 	// clean test data
 	delRoute := HttpTestCase{
-		caseDesc:     "delete route",
-		Object:       MangerApiExpect(t),
+		Desc:         "delete route",
+		Object:       ManagerApiExpect(t),
 		Method:       http.MethodDelete,
 		Path:         "/apisix/admin/routes/r1",
 		Headers:      map[string]string{"Authorization": token},
 		ExpectStatus: http.StatusOK,
 	}
-	testCaseCheck(delRoute)
-
+	testCaseCheck(delRoute, t)
 }

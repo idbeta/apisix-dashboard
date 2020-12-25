@@ -32,17 +32,18 @@ export default {
   'component.global.loading': 'Loading',
   'component.global.list': 'List',
   'component.global.description': 'Description',
+  'component.global.labels': 'Labels',
   'component.global.operation': 'Operation',
   'component.status.success': 'Successfully',
   'component.status.fail': 'Failed',
   'component.global.popconfirm.title.delete': 'Are you sure to delete this record ?',
-  'component.global.notification.success.messaage.deleteSuccess': 'Deleted Successfully',
+  'component.global.notification.success.message.deleteSuccess': 'Deleted Successfully',
 
   'component.global.steps.stepTitle.basicInformation': 'Basic Information',
   'component.global.steps.stepTitle.preview': 'Preview',
   'component.global.steps.stepTitle.pluginConfig': 'Plugin Config',
 
-  'component.global.pleaseEnter': 'Please Eneter',
+  'component.global.pleaseEnter': 'Please Enter',
   'component.global.pleaseChoose': 'Please Choose',
   'component.global.pleaseCheck': 'Please Check',
 

@@ -14,9 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Form from 'antd/es/form';
-import { Checkbox, Button, Input, Select, Row, Col } from 'antd';
+import { Button, Input, Select, Row, Col, InputNumber, Switch } from 'antd';
 import { PlusOutlined, MinusCircleOutlined } from '@ant-design/icons';
 import { useIntl } from 'umi';
 import { PanelSection } from '@api7-dashboard/ui';
@@ -26,13 +26,20 @@ import {
   FORM_ITEM_LAYOUT,
   FORM_ITEM_WITHOUT_LABEL,
 } from '@/pages/Route/constants';
+import { fetchServiceList } from '../../service';
 
 const RequestConfigView: React.FC<RouteModule.Step1PassProps> = ({
   form,
   disabled,
-  onChange = () => {},
+  onChange = () => { },
 }) => {
   const { formatMessage } = useIntl();
+  const [serviceList, setServiceList] = useState<ServiceModule.ResponseBody[]>([]);
+
+  useEffect(() => {
+    fetchServiceList().then(({ data }) => setServiceList(data));
+  }, []);
+
   const HostList = () => (
     <Form.List name="hosts">
       {(fields, { add, remove }) => {
@@ -41,12 +48,10 @@ const RequestConfigView: React.FC<RouteModule.Step1PassProps> = ({
             {fields.map((field, index) => (
               <Form.Item
                 {...(index === 0 ? FORM_ITEM_LAYOUT : FORM_ITEM_WITHOUT_LABEL)}
-                label={index === 0 ? formatMessage({ id: 'page.route.domainName' }) : ''}
+                label={index === 0 && formatMessage({ id: 'page.route.domainName' })}
                 key={field.key}
                 extra={
-                  index === 0
-                    ? formatMessage({ id: 'page.route.form.itemExtraMessage.domain' })
-                    : ''
+                  index === 0 && formatMessage({ id: 'page.route.form.itemExtraMessage.domain' })
                 }
               >
                 <Form.Item
@@ -85,6 +90,7 @@ const RequestConfigView: React.FC<RouteModule.Step1PassProps> = ({
               <Form.Item {...FORM_ITEM_WITHOUT_LABEL}>
                 <Button
                   type="dashed"
+                  data-cy="addHost"
                   onClick={() => {
                     add();
                   }}
@@ -107,17 +113,17 @@ const RequestConfigView: React.FC<RouteModule.Step1PassProps> = ({
             {fields.map((field, index) => (
               <Form.Item
                 {...(index === 0 ? FORM_ITEM_LAYOUT : FORM_ITEM_WITHOUT_LABEL)}
-                label={index === 0 ? formatMessage({ id: 'page.route.path' }) : ''}
+                label={index === 0 && formatMessage({ id: 'page.route.path' })}
                 required
                 key={field.key}
                 extra={
-                  index === 0 ? (
+                  index === 0 && (
                     <div>
                       {formatMessage({ id: 'page.route.form.itemExtraMessage1.path' })}
                       <br />
                       {formatMessage({ id: 'page.route.form.itemExtraMessage2.path' })}
                     </div>
-                  ) : null
+                  )
                 }
               >
                 <Form.Item
@@ -163,6 +169,79 @@ const RequestConfigView: React.FC<RouteModule.Step1PassProps> = ({
               <Form.Item {...FORM_ITEM_WITHOUT_LABEL}>
                 <Button
                   type="dashed"
+                  data-cy="addUri"
+                  onClick={() => {
+                    add();
+                  }}
+                >
+                  <PlusOutlined /> {formatMessage({ id: 'component.global.create' })}
+                </Button>
+              </Form.Item>
+            )}
+          </div>
+        );
+      }}
+    </Form.List>
+  );
+
+  const RemoteAddrList = () => (
+    <Form.List name="remote_addrs">
+      {(fields, { add, remove }) => {
+        return (
+          <div>
+            {fields.map((field, index) => (
+              <Form.Item
+                {...(index === 0 ? FORM_ITEM_LAYOUT : FORM_ITEM_WITHOUT_LABEL)}
+                label={index === 0 && formatMessage({ id: 'page.route.remoteAddrs' })}
+                key={field.key}
+                extra={
+                  index === 0 && (
+                    <div>
+                      {formatMessage({ id: 'page.route.form.itemExtraMessage1.remoteAddrs' })}
+                    </div>
+                  )
+                }
+              >
+                <Form.Item
+                  {...field}
+                  validateTrigger={['onChange', 'onBlur']}
+                  rules={[
+                    {
+                      pattern: new RegExp(
+                        /^[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}$|^[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}\/[0-9]{1,2}$|^([a-fA-F0-9]{0,4}:){0,8}(:[a-fA-F0-9]{0,4}){0,8}([a-fA-F0-9]{0,4})?$|^([a-fA-F0-9]{0,4}:){0,8}(:[a-fA-F0-9]{0,4}){0,8}([a-fA-F0-9]{0,4})?\/[0-9]{1,3}$/,
+                        'g',
+                      ),
+                      message: formatMessage({
+                        id: 'page.route.form.itemRulesPatternMessage.remoteAddrs',
+                      }),
+                    },
+                  ]}
+                  noStyle
+                >
+                  <Input
+                    placeholder={`${formatMessage({
+                      id: 'component.global.pleaseEnter',
+                    })} ${formatMessage({ id: 'page.route.remoteAddrs' })}`}
+                    style={{ width: '60%' }}
+                    disabled={disabled}
+                  />
+                </Form.Item>
+                {!disabled && fields.length > 1 && (
+                  <MinusCircleOutlined
+                    className="dynamic-delete-button"
+                    style={{ margin: '0 8px' }}
+                    onClick={() => {
+                      remove(field.name);
+                    }}
+                  />
+                )}
+              </Form.Item>
+            ))}
+            {!disabled && (
+              <Form.Item {...FORM_ITEM_WITHOUT_LABEL}>
+                <Button
+                  type="dashed"
+                  data-cy="addRemoteAddr"
                   onClick={() => {
                     add();
                   }}
@@ -183,19 +262,47 @@ const RequestConfigView: React.FC<RouteModule.Step1PassProps> = ({
     >
       <HostList />
       <UriList />
+      <RemoteAddrList />
       <Form.Item
         label={formatMessage({ id: 'page.route.form.itemLabel.httpMethod' })}
         name="methods"
-        rules={[
-          {
-            required: true,
-            message: `${formatMessage({ id: 'component.global.pleaseChoose' })} ${formatMessage({
-              id: 'page.route.form.itemLabel.httpMethod',
-            })}`,
-          },
-        ]}
       >
-        <Checkbox.Group options={HTTP_METHOD_OPTION_LIST} disabled={disabled} />
+        <Select
+          mode="multiple"
+          style={{ width: '100%' }}
+          optionLabelProp="label"
+          disabled={disabled}
+          onChange={(value) => {
+            if ((value as string[]).includes('ALL')) {
+              form.setFieldsValue({
+                methods: ['ALL'],
+              });
+            }
+          }}
+        >
+          {['ALL'].concat(HTTP_METHOD_OPTION_LIST).map((item) => {
+            return (
+              <Select.Option key={item} value={item}>
+                {item}
+              </Select.Option>
+            );
+          })}
+        </Select>
+      </Form.Item>
+      <Form.Item
+        label={formatMessage({ id: 'page.route.form.itemLabel.priority' })}
+        name="priority"
+      >
+        <InputNumber
+          placeholder={`Please input ${formatMessage({
+            id: 'page.route.form.itemLabel.priority',
+          })}`}
+          style={{ width: '60%' }}
+          disabled={disabled}
+        />
+      </Form.Item>
+      <Form.Item label="Websocket" valuePropName="checked" name="enable_websocket">
+        <Switch disabled={disabled} />
       </Form.Item>
       <Form.Item
         label={formatMessage({ id: 'page.route.form.itemLabel.redirect' })}
@@ -275,6 +382,20 @@ const RequestConfigView: React.FC<RouteModule.Step1PassProps> = ({
           }
           return null;
         }}
+      </Form.Item>
+      <Form.Item
+        label={formatMessage({ id: 'page.route.service' })}
+        name='service_id'
+      >
+        <Select disabled={disabled}>
+          {/* TODO: value === '' means  no service_id select, need to find a better way */}
+          <Select.Option value='' key={Math.random().toString(36).substring(7)}>None</Select.Option>
+          {serviceList.map(item => {
+            return <Select.Option value={item.id} key={item.id}>
+              {item.name}
+            </Select.Option>
+          })}
+        </Select>
       </Form.Item>
     </PanelSection>
   );

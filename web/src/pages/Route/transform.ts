@@ -16,6 +16,15 @@
  */
 import { omit, pick, cloneDeep } from 'lodash';
 
+export const transformLableValueToKeyValue = (data: string[]) => {
+  return (data || []).map((item) => {
+    const index = item.indexOf(':');
+    const labelKey = item.substring(0, index);
+    const labelValue = item.substring(index + 1);
+    return { labelKey, labelValue, key: Math.random().toString(36).slice(2) };
+  });
+};
+
 export const transformStepData = ({
   form1Data,
   form2Data,
@@ -35,8 +44,15 @@ export const transformStepData = ({
     };
   }
 
+  const labels = {};
+  transformLableValueToKeyValue(form1Data.labels).forEach(item => {
+    labels[item.labelKey] = item.labelValue;
+  })
+  const { service_id = '' } = form1Data;
+
   const data: Partial<RouteModule.Body> = {
-    ...form1Data,
+    ...omit(form1Data, 'labels'),
+    labels,
     ...step3DataCloned,
     vars: advancedMatchingRules.map((rule) => {
       const { operator, position, name, value } = rule;
@@ -53,6 +69,8 @@ export const transformStepData = ({
       }
       return [key, operator, value];
     }),
+    // @ts-ignore
+    methods: form1Data.methods.includes("ALL") ? [] : form1Data.methods
   };
 
   if (Object.keys(redirect).length === 0 || redirect.http_to_https) {
@@ -63,10 +81,13 @@ export const transformStepData = ({
     }
 
     if (redirect.http_to_https) {
-      if (Object(data.plugins).length === 0) {
+      if (Object.keys(data.plugins!).length === 0) {
         data.plugins = {};
       }
       data.plugins!.redirect = redirect;
+    }
+    if (data.status !== undefined) {
+      data.status = Number(data.status);
     }
 
     // Remove some of the frontend custom variables
@@ -78,10 +99,12 @@ export const transformStepData = ({
       'redirectURI',
       'ret_code',
       'redirectOption',
+      service_id.length === 0 ? 'service_id' : '',
       !Object.keys(step3DataCloned.plugins || {}).length ? 'plugins' : '',
       !Object.keys(step3DataCloned.script || {}).length ? 'script' : '',
       form1Data.hosts.filter(Boolean).length === 0 ? 'hosts' : '',
       form1Data.redirectOption === 'disabled' ? 'redirect' : '',
+      data.remote_addrs?.filter(Boolean).length === 0 ? 'remote_addrs' : '',
     ]);
   }
 
@@ -97,7 +120,9 @@ export const transformStepData = ({
     'redirect',
     'vars',
     'plugins',
+    service_id.length !== 0 ? 'service_id' : '',
     form1Data.hosts.filter(Boolean).length !== 0 ? 'hosts' : '',
+    data.remote_addrs?.filter(Boolean).length !== 0 ? 'remote_addrs' : '',
   ]);
 };
 
@@ -130,14 +155,37 @@ export const transformUpstreamNodes = (
 };
 
 export const transformRouteData = (data: RouteModule.Body) => {
-  const { name, desc, methods, uris, uri, hosts, host, vars, status, upstream, upstream_id } = data;
+  const {
+    name,
+    desc,
+    labels,
+    methods = [],
+    uris,
+    uri,
+    hosts,
+    host,
+    remote_addrs,
+    vars,
+    status,
+    upstream,
+    upstream_id,
+    service_id = '',
+    priority = 0,
+    enable_websocket
+  } = data;
   const form1Data: Partial<RouteModule.Form1Data> = {
     name,
     desc,
     status,
     hosts: hosts || (host && [host]) || [''],
     uris: uris || (uri && [uri]) || [],
-    methods,
+    remote_addrs: remote_addrs || [''],
+    labels: Object.keys(labels || []).map((item) => `${item}:${labels[item]}`),
+    // @ts-ignore
+    methods: methods.length ? methods : ["ALL"],
+    priority,
+    enable_websocket,
+    service_id
   };
 
   const redirect = data.plugins?.redirect || {};
@@ -168,4 +216,25 @@ export const transformRouteData = (data: RouteModule.Body) => {
     step3Data,
     advancedMatchingRules,
   };
+};
+
+export const transformLabelList = (data: RouteModule.ResponseLabelList) => {
+  if (!data) {
+    return {};
+  }
+  const transformData = {};
+  data.forEach((item) => {
+    const key = Object.keys(item)[0];
+    const value = item[key];
+    if (!transformData[key]) {
+      transformData[key] = [];
+      transformData[key].push(value);
+      return;
+    }
+
+    if (transformData[key] && !transformData[key][value]) {
+      transformData[key].push(value);
+    }
+  });
+  return transformData;
 };

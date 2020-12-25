@@ -22,6 +22,8 @@ local fake_module_list = {
     'cjson.safe',
     'bit',
     'lfs',
+    'ngx.worker',
+    'ngx.errlog',
     'ngx.process',
     'ngx.re',
     'net.url',
@@ -80,10 +82,12 @@ ngx.timer = {}
 ngx.location = {}
 ngx.socket = {}
 ngx.thread = {}
+ngx.worker = {}
 ngx.re.gmatch = empty_function
 ngx.shared = {
     ["plugin-api-breaker"] = {}
 }
+ngx.shared.internal_status = {}
 
 -- additional define for management
 local time_def = {
@@ -107,7 +111,8 @@ package.loaded["apisix.core"] = {
     },
     table = {
         insert = empty_function
-    }
+    },
+    string = {}
 }
 
 

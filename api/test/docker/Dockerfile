@@ -50,7 +50,6 @@ RUN mkdir -p /go/manager-api \
    && echo "hosts: files dns" > /etc/nsswitch.conf \
    && rm -rf /var/cache/apk/*
 
-RUN apk add lua5.1
 
 WORKDIR /go/manager-api
 COPY --from=build-env /go/manager-api/ /go/manager-api/
@@ -58,7 +57,7 @@ COPY --from=build-env /usr/share/zoneinfo/Hongkong /etc/localtime
 
 RUN mkdir logs
 
-EXPOSE 8080
+EXPOSE 9000
 
 RUN chmod +x ./entry.sh
 

@@ -35,8 +35,6 @@ Before using source codes to build, make sure that the following dependencies ar
 $ go env -w GOPROXY=https://goproxy.cn,direct
 ```
 
-2. [Lua](https://www.lua.org/download.html) 5.1+: This dependency needs to be installed only when using the **Plugin Orchestration** feature. In subsequent versions, this section will be optimized to remove the dependency.
-
 ### web
 
 1. [Node.js](https://nodejs.org/en/download/) 10.23.0+
@@ -45,7 +43,7 @@ $ go env -w GOPROXY=https://goproxy.cn,direct
 ## Clone the project
 
 ```sh
-$ git clone -b v2.0 https://github.com/apache/apisix-dashboard.git
+$ git clone -b v2.2 https://github.com/apache/apisix-dashboard.git
 ```
 
 ## Build
@@ -75,10 +73,10 @@ $ cd ./output
 $ ./manager-api
 
 # or running in background
-$ ./manager-api &
+$ nohup ./manager-api &
 ```
 
-4. Without changing the configuration, visit `http://127.0.0.1:8080` to use the dashboard with GUI, where the default username and password are `admin`.
+4. Without changing the configuration, visit `http://127.0.0.1:9000` to use the dashboard with GUI, where the default username and password are `admin`.
 
 5. Stop the Dashboard
 

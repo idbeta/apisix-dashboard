@@ -24,6 +24,10 @@ const routes = [
     component: './Metrics',
   },
   {
+    path: '/serverinfo',
+    component: './ServerInfo',
+  },
+  {
     path: '/routes/list',
     component: './Route/List',
   },
@@ -70,6 +74,18 @@ const routes = [
   {
     path: '/consumer/:username/edit',
     component: './Consumer/Create',
+  },
+  {
+    path: '/service/list',
+    component: './Service/List',
+  },
+  {
+    path: '/service/create',
+    component: './Service/Create',
+  },
+  {
+    path: '/service/:serviceId/edit',
+    component: './Service/Create',
   },
   {
     path: '/settings',
