@@ -22,16 +22,20 @@ import { useIntl } from 'umi';
 import { transformLableValueToKeyValue } from '../../transform';
 import { fetchLabelList } from '../../service';
 
-interface Props extends Pick<RouteModule.Step1PassProps, 'onChange'> {
-  labelsDataSource: string[];
+type Props = {
+  title?: string;
+  actionName: string;
+  dataSource: string[];
   disabled: boolean;
   onClose(): void;
-}
+} & Pick<RouteModule.Step1PassProps, 'onChange'>;
 
 const LabelList = (disabled: boolean, labelList: RouteModule.LabelList) => {
   const { formatMessage } = useIntl();
 
-  const keyOptions = Object.keys(labelList || {}).map((item) => ({ value: item }));
+  const keyOptions = Object.keys(labelList || {})
+    .filter((item) => item !== 'API_VERSION')
+    .map((item) => ({ value: item }));
   return (
     <Form.List name="labels">
       {(fields, { add, remove }) => {
@@ -108,12 +112,14 @@ const LabelList = (disabled: boolean, labelList: RouteModule.LabelList) => {
 };
 
 const LabelsDrawer: React.FC<Props> = ({
-  disabled,
-  labelsDataSource,
+  title = 'Label Manager',
+  actionName = '',
+  disabled = false,
+  dataSource = [],
   onClose,
-  onChange = () => { },
+  onChange = () => {},
 }) => {
-  const transformLabel = transformLableValueToKeyValue(labelsDataSource);
+  const transformLabel = transformLableValueToKeyValue(dataSource);
 
   const { formatMessage } = useIntl();
   const [form] = Form.useForm();
@@ -126,12 +132,13 @@ const LabelsDrawer: React.FC<Props> = ({
 
   return (
     <Drawer
-      title="Edit labels"
+      title={title}
       placement="right"
       width={512}
       visible
       closable
       onClose={onClose}
+      maskClosable={false}
       footer={
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
           <Button onClick={onClose}>{formatMessage({ id: 'component.global.cancel' })}</Button>
@@ -141,7 +148,7 @@ const LabelsDrawer: React.FC<Props> = ({
             onClick={(e) => {
               e.persist();
               form.validateFields().then(({ labels }) => {
-                const data = labels.map((item: any) => `${item.labelKey}:${item.labelValue}`)
+                const data = labels.map((item: any) => `${item.labelKey}:${item.labelValue}`);
                 // check for duplicates
                 if (new Set(data).size !== data.length) {
                   notification.warning({
@@ -152,7 +159,7 @@ const LabelsDrawer: React.FC<Props> = ({
                 }
 
                 onChange({
-                  action: 'labelsChange',
+                  action: actionName,
                   data,
                 });
                 onClose();
@@ -161,13 +168,13 @@ const LabelsDrawer: React.FC<Props> = ({
           >
             {formatMessage({ id: 'component.global.confirm' })}
           </Button>
-        </div >
+        </div>
       }
     >
       <Form form={form} layout="horizontal">
         {LabelList(disabled, labelList || {})}
       </Form>
-    </Drawer >
+    </Drawer>
   );
 };
 

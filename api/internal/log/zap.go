@@ -22,18 +22,23 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
-	"github.com/apisix/manager-api/conf"
+	"github.com/apisix/manager-api/internal/conf"
 )
 
 var logger *zap.SugaredLogger
 
-// TODO: it is just for integration tests, we should call "InitLog" explicitly when remove all handler's integration tests
+// TODO: we should no longer use init() function after remove all handler's integration tests
+// ENV=test is for integration tests only, other ENV should call "InitLogger" explicitly
 func init() {
-	InitLogger()
+	if env := os.Getenv("ENV"); env == conf.EnvTEST {
+		InitLogger()
+	}
 }
+
 func InitLogger() {
 	logger = GetLogger(ErrorLog)
 }
+
 func GetLogger(logType Type) *zap.SugaredLogger {
 	writeSyncer := fileWriter(logType)
 	encoder := getEncoder(logType)

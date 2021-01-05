@@ -83,7 +83,7 @@ declare namespace RouteModule {
     remote_addrs: string[];
     vars: [string, Operator, string][];
     upstream: {
-      type: 'roundrobin' | 'chash';
+      type: 'roundrobin' | 'chash' | 'ewma';
       hash_on?: string;
       key?: string;
       nodes: {
@@ -124,26 +124,24 @@ declare namespace RouteModule {
   type LabelList = Record<string, string[]>;
 
   type LabelTableProps = {
-    labelKey: string,
-    labelValue: string,
-    key: string
-  }
+    labelKey: string;
+    labelValue: string;
+    key: string;
+  };
 
   type Step1PassProps = {
     form: FormInstance;
     advancedMatchingRules: MatchingRule[];
     disabled?: boolean;
     isEdit?: boolean;
-    onChange?(data: {
-      action: 'redirectOptionChange' | 'advancedMatchingRulesChange' | 'labelsChange';
-      data: T;
-    }): void;
+    onChange?(data: { action: string; data: T }): void;
   };
 
   type Form1Data = {
     name: string;
     desc: string;
-    labels: string[];
+    custom_version_label: string;
+    custom_normal_labels: string[];
     priority: number;
     websocket: boolean;
     hosts: string[];
@@ -176,7 +174,7 @@ declare namespace RouteModule {
   };
 
   type Form2Data = {
-    type: 'roundrobin' | 'chash';
+    type: 'roundrobin' | 'chash' | 'ewma';
     hash_on?: string;
     key?: string;
     upstreamPath?: string;
@@ -253,7 +251,7 @@ declare namespace RouteModule {
   // TODO： grpc and websocket
   type debugRequest = {
     url: string;
-    request_protocol: 'http' | 'grpc' | 'websocket';
+    request_protocol: 'http' | 'https' | 'grpc' | 'websocket';
     method: string;
     body_params?: any;
     header_params?: any;
